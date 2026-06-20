@@ -1,0 +1,8 @@
+{
+  "docket_id": "PUR-2024-00001",
+  "state": "VA",
+  "source_url": "synthetic://tests/fixtures/va/PUR-2024-00001",
+  "retrieved_at": "2026-06-20T00:00:00Z",
+  "sha256": "653e2771fa37a4c2666558b96f0aed7aa5159cade3788304d3666ab4f0290910",
+  "note": "Synthetic, non-redistributable stand-in for a Virginia SCC docket. Replace with a real PDF + recomputed sha256 when one is cleared for redistribution."
+}

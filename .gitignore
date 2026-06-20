@@ -9,4 +9,7 @@ build/
 .env
 data/cache/
 data/dockets/raw/
+data/dockets/chunks/
+data/index/
+data/extracted/
 faiss_index/

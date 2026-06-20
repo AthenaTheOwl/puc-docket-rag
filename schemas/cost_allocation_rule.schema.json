@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://puc-docket-rag/schemas/cost_allocation_rule.schema.json",
+  "title": "cost_allocation_rule",
+  "description": "A single cost-allocation rule extracted from a PUC docket, with a citation that resolves to a chunk in the retrieved set. Spec 0002 extends the v0 schema's source_citation to require chunk_id; see decisions/DEC-001 for the citation-faithfulness contract.",
+  "type": "object",
+  "required": ["rule_id", "rule_text", "source_citation"],
+  "additionalProperties": false,
+  "properties": {
+    "rule_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Stable identifier for the rule within the extraction run."
+    },
+    "rule_text": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The rule statement, verbatim or close paraphrase."
+    },
+    "rule_type": {
+      "type": "string",
+      "enum": [
+        "generation_demand",
+        "transmission_demand",
+        "distribution_demand",
+        "customer",
+        "energy",
+        "subclass",
+        "other"
+      ],
+      "description": "Coarse category. Optional in v0.1."
+    },
+    "source_citation": {
+      "type": "object",
+      "required": ["docket_id", "page_number", "line_range", "chunk_id"],
+      "additionalProperties": false,
+      "properties": {
+        "docket_id": { "type": "string", "minLength": 1 },
+        "page_number": { "type": "integer", "minimum": 1 },
+        "line_range": {
+          "type": "string",
+          "pattern": "^[0-9]+-[0-9]+$",
+          "description": "1-indexed `start-end` line numbers on the cited page."
+        },
+        "chunk_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Hex SHA-1 of the normalized chunk text (NFC + whitespace-collapse) joined with the page number. Must match a chunk_id from the retrieval call for this row; see DEC-001."
+        }
+      }
+    }
+  }
+}
