@@ -1,0 +1,25 @@
+# puc-docket-rag v0.1 configuration. Values here become CLI defaults;
+# explicit CLI flags override. The [chunk] and [index] sections are
+# hashed into the index idempotency sidecar's config_hash, so any edit
+# here forces a rebuild on the next `pdr index` call.
+
+[chunk]
+target_tokens = 800
+overlap_tokens = 100
+
+[index]
+# v0.1 ships a stdlib TF-IDF engine; see decisions/DEC-002 for the
+# FAISS + sentence-transformers swap plan.
+min_df = 1
+embedding_model_id = "stdlib-tfidf-v1"
+
+[embedding]
+# Reserved for the spec 0003 engine swap. The CLI consults `model_id`
+# and `cache_dir` once `sentence-transformers` lands.
+model_id = "stdlib-tfidf-v1"
+cache_dir = "~/.cache/huggingface"
+
+[extraction]
+default_query = "cost allocation methodology"
+default_k = 5
+schema_dir = "schemas"
