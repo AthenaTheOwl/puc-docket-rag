@@ -59,6 +59,36 @@ Outputs land at the spec 0002 paths:
 `faiss_index/va/PUR-2024-00001.{faiss,meta.jsonl,index.json}`, and
 `data/extracted/va/PUR-2024-00001/cost_allocation_rule.jsonl`.
 
+## try it
+
+One no-arg command runs the whole v0.1 pipeline (chunk, index, search,
+extract) over the committed VA fixture and prints a readable result. It is
+offline and read-only; the index is built in a temp dir, nothing is
+written to the repo tree.
+
+```bash
+pdr demo
+```
+
+```
+docket    PUR-2024-00001  (VA)
+query     'data-center cost allocation methodology'
+
+top 3 passages by TF-IDF relevance
+  1. score 0.259  [p.1 L1-23]  b5d04a590b08
+       ... Re: Cost Allocation Methodology for Large Customer Loads ...
+
+extracted cost-allocation rules (citation-gated)
+  kept 1   dropped 1
+  KEPT  CAR-001  [PUR-2024-00001 p.1 L1-23]
+        Data-center load is allocated to the GS-4 rate class.
+  DROP  CAR-002  (chunk_id '0000...0000' not in retrieved set)
+```
+
+The point: every extracted rule carries a page-and-line citation back to
+the docket, and a rule whose citation is not in the retrieved set is
+dropped, never emitted unsourced.
+
 ## layout
 
 v0.1 ships flat modules under `src/pdr/`; the sub-package layout from

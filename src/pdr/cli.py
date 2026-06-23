@@ -9,6 +9,7 @@ from pathlib import Path
 
 from pdr.chunk import chunk_pages
 from pdr.config import Config, load_config
+from pdr.demo import render_demo
 from pdr.extract import FakeAdapter, extract, write_jsonl
 from pdr.index import IndexConfig, build_index
 from pdr.ingest import load_fixture
@@ -123,6 +124,11 @@ def _cmd_extract(args: argparse.Namespace, cfg: Config) -> int:
     return 0
 
 
+def _cmd_demo(args: argparse.Namespace, cfg: Config) -> int:
+    print(render_demo(cfg=cfg))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="pdr", description="puc-docket-rag v0.1 CLI")
     p.add_argument(
@@ -132,6 +138,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="path to pdr.toml (defaults to ./pdr.toml)",
     )
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    demo = sub.add_parser(
+        "demo",
+        help="run the full pipeline over the committed VA fixture and print "
+        "a readable result (no args, offline, read-only)",
+    )
+    demo.set_defaults(func=_cmd_demo)
 
     chunk = sub.add_parser("chunk", help="paragraph-chunk a fixture to JSONL")
     _add_common(chunk)
