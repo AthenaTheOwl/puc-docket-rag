@@ -1,0 +1,4 @@
+streamlit>=1.40
+# the app imports the local pdr package (pure stdlib, no third-party deps);
+# `.` makes Streamlit Cloud pip-install it from pyproject.toml.
+.

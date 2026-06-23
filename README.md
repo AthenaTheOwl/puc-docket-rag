@@ -89,6 +89,25 @@ The point: every extracted rule carries a page-and-line citation back to
 the docket, and a rule whose citation is not in the retrieved set is
 dropped, never emitted unsourced.
 
+## live demo
+
+an interactive Streamlit page wraps the same `pdr demo` result: the ranked
+TF-IDF passages with page/line citations and the citation-gated extraction
+(kept vs dropped). it runs offline over the committed VA fixture — no
+network, no secrets.
+
+<!-- live url: https://<your-app>.streamlit.app (fill in after deploy) -->
+
+local:
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+streamlit community cloud: new app -> repo `AthenaTheOwl/puc-docket-rag`,
+branch `main`, main file `streamlit_app.py`.
+
 ## layout
 
 v0.1 ships flat modules under `src/pdr/`; the sub-package layout from
