@@ -15,6 +15,7 @@ branch main, main file streamlit_app.py.
 """
 from __future__ import annotations
 
+import json
 import sys
 import tempfile
 from pathlib import Path
@@ -58,7 +59,7 @@ if not (FIXTURE / "pages.jsonl").is_file() or not (
 try:
     from pdr.chunk import chunk_pages
     from pdr.config import Config
-    from pdr.extract import FakeAdapter, extract
+    from pdr.extract import FakeAdapter, extract, load_schema, validate_citations
     from pdr.index import IndexConfig, build_index
     from pdr.ingest import load_fixture
     from pdr.search import search
@@ -205,9 +206,137 @@ if dropped:
             rid = r.get("rule_id", "<no rule_id>")
             st.markdown(f"- **{rid}** — {reason}")
 
+st.divider()
+
+# --- drive the citation gate yourself ---------------------------------------
+# Everything above runs the canned FakeAdapter. This section hands the steering
+# wheel to the user: paste your OWN candidate extraction rows (the JSON an LLM
+# would emit) and run the repo's real citation gate — pdr.extract.validate_citations —
+# against the live retrieved set for the query above. A row survives only if it
+# is schema-valid AND its source_citation.chunk_id is a chunk that retrieval
+# actually returned. Fabricate a chunk_id, drop a required field, or break the
+# line_range pattern and watch the gate reject it, with the reason.
+st.subheader("validate your own rules against the citation gate")
+st.caption(
+    "this is the real engine, not a lookup: your rows go straight into "
+    "`pdr.extract.validate_citations(rows, hits, schema)`. a rule is kept only "
+    "if it is schema-valid and cites a chunk_id that retrieval returned for the "
+    "query above. nothing unsourced gets through."
+)
+
+retrieved_ids = [h.chunk_id for h in hits]
+if retrieved_ids:
+    st.markdown(
+        "**chunk_ids in the current retrieved set** (a citation must match one "
+        "of these to pass):"
+    )
+    st.code("\n".join(retrieved_ids), language="text")
+else:
+    st.info("no passages retrieved for the current query — widen it above first.")
+
+# Pre-fill: one row that cites the top hit (will pass) and one with a
+# fabricated all-zeros chunk_id (will be dropped). The user can edit freely.
+_top = hits[0] if hits else None
+_example = [
+    {
+        "rule_id": "CAR-101",
+        "rule_text": (
+            "Data-center load is allocated to the GS-4 rate class."
+        ),
+        "source_citation": {
+            "docket_id": _top.docket_id if _top else doc.docket_id,
+            "page_number": _top.page_number if _top else 1,
+            "line_range": (
+                f"{_top.line_start}-{_top.line_end}" if _top else "1-1"
+            ),
+            "chunk_id": _top.chunk_id if _top else ("0" * 40),
+        },
+    },
+    {
+        "rule_id": "CAR-102",
+        "rule_text": (
+            "This row cites a chunk retrieval never returned — it must be "
+            "dropped, not emitted unsourced."
+        ),
+        "source_citation": {
+            "docket_id": _top.docket_id if _top else doc.docket_id,
+            "page_number": 1,
+            "line_range": "1-1",
+            "chunk_id": "0" * 40,
+        },
+    },
+]
+
+user_json = st.text_area(
+    "candidate extraction rows (JSON array)",
+    value=json.dumps(_example, indent=2),
+    height=320,
+    help=(
+        "edit the chunk_id, drop a required field, or break the line_range "
+        "pattern to see the gate react."
+    ),
+)
+
+run = st.button("run the citation gate", type="primary")
+if run:
+    try:
+        parsed = json.loads(user_json)
+    except json.JSONDecodeError as exc:
+        st.error(f"that is not valid JSON: {exc}")
+    else:
+        if isinstance(parsed, dict):
+            parsed = [parsed]
+        if not isinstance(parsed, list):
+            st.error("expected a JSON array of rows (or a single row object).")
+        else:
+            try:
+                schema_doc = load_schema(
+                    "cost_allocation_rule", str(SCHEMA_DIR)
+                )
+                u_kept, u_dropped = validate_citations(
+                    parsed, hits, schema=schema_doc
+                )
+            except Exception as exc:  # pragma: no cover - user-input guard
+                st.error(f"the gate could not run on that input: {exc}")
+            else:
+                c1, c2 = st.columns(2)
+                c1.metric("kept (sourced)", len(u_kept))
+                c2.metric("dropped", len(u_dropped))
+                if u_kept:
+                    st.success(
+                        f"{len(u_kept)} row(s) passed: schema-valid and citing "
+                        "a chunk in the retrieved set."
+                    )
+                    st.dataframe(
+                        [
+                            {
+                                "rule_id": r.get("rule_id", "<none>"),
+                                "chunk_id": r["source_citation"]["chunk_id"][:12],
+                                "rule_text": r.get("rule_text", ""),
+                            }
+                            for r in u_kept
+                        ],
+                        use_container_width=True,
+                        hide_index=True,
+                    )
+                if u_dropped:
+                    st.error(
+                        f"{len(u_dropped)} row(s) rejected by the gate — and the "
+                        "reason for each:"
+                    )
+                    for r, reason in u_dropped:
+                        rid = r.get("rule_id", "<no rule_id>") if isinstance(
+                            r, dict
+                        ) else "<non-object row>"
+                        st.markdown(f"- **{rid}** — {reason}")
+                if not u_kept and not u_dropped:
+                    st.info("no rows in the input.")
+
+st.divider()
 st.caption(
     "v0.1 ships one VA docket fixture (PUR-2024-00001). the pipeline lives in "
     "`src/pdr/`; this page runs the same chunk -> index -> search -> extract "
-    "the `pdr demo` verb runs, in a throwaway temp index. "
+    "the `pdr demo` verb runs, in a throwaway temp index, and the section above "
+    "drives the real `validate_citations` gate on your own rows. "
     "repo: github.com/AthenaTheOwl/puc-docket-rag"
 )
