@@ -23,7 +23,7 @@ jobs:
           python -m uv sync
 
       - name: pytest
-        run: python -m uv run pytest -q
+        run: python -m uv run --with pytest pytest -q
 
       - name: compile python surfaces
         run: |
