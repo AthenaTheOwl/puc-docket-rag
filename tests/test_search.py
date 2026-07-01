@@ -94,6 +94,35 @@ def test_relevant_query_surfaces_relevant_chunk(tmp_path):
     )
 
 
+def test_idf_weights_rare_terms_above_common_terms(tmp_path):
+    # Golden-master lock on build_index's IDF output. A term in 1 of the
+    # four fixture chunks must weigh strictly above a term in all four,
+    # else retrieval ranks common filler above discriminating terms. The
+    # literals below are what correct IDF (log((1+n)/(1+df))+1) produces;
+    # an inverted formula would flip the inequality and the equalities.
+    doc = load_fixture(FIXTURE)
+    chunks = [
+        c.to_jsonable()
+        for c in chunk_pages(doc.pages(), docket_id=doc.docket_id, target_tokens=800)
+    ]
+    stem = tmp_path / "va" / doc.docket_id
+    handle = build_index(chunks, stem, config=IndexConfig(target_tokens=800))
+    assert len(handle.doc_vectors) == 4
+
+    def idf_of(term: str) -> float:
+        return handle.idf[handle.vocab[term]]
+
+    # "coincident" appears in a single chunk; "the" in all four.
+    assert idf_of("coincident") == pytest.approx(1.2231435513142097)
+    assert idf_of("the") == pytest.approx(1.0)
+    assert idf_of("coincident") > idf_of("the")
+
+    hits = search(stem, "twelve coincident peak 12-cp generation allocation", k=4)
+    assert hits[0].page_number == 2, (
+        "the 12-CP generation-allocation chunk must rank first"
+    )
+
+
 def test_index_on_disk_layout_uses_spec_suffixes(tmp_path):
     stem = _build(tmp_path)
     assert stem.with_suffix(".faiss").is_file(), (
@@ -197,6 +226,41 @@ def test_validate_citations_drops_schema_violations(tmp_path):
     assert len(dropped) == 2
     assert "missing field" in dropped[0][1]
     assert "must be integer" in dropped[1][1]
+
+
+def test_validate_citations_drops_below_minimum_and_min_length(tmp_path):
+    # Exercises the `minimum` and `minLength` branches of the validator,
+    # which no other test reaches. page_number=0 is below the schema
+    # minimum of 1; an empty rule_id is below minLength 1.
+    stem = _build(tmp_path)
+    hits = search(stem, "cost allocation methodology", k=3)
+    bad_rows = [
+        {
+            "rule_id": "CAR-100",
+            "rule_text": "page_number below minimum",
+            "source_citation": {
+                "docket_id": "PUR-2024-00001",
+                "page_number": 0,
+                "line_range": "1-2",
+                "chunk_id": hits[0].chunk_id,
+            },
+        },
+        {
+            "rule_id": "",
+            "rule_text": "empty rule_id below minLength",
+            "source_citation": {
+                "docket_id": "PUR-2024-00001",
+                "page_number": 1,
+                "line_range": "1-2",
+                "chunk_id": hits[0].chunk_id,
+            },
+        },
+    ]
+    kept, dropped = validate_citations(bad_rows, hits)
+    assert kept == []
+    assert len(dropped) == 2
+    assert "below minimum 1" in dropped[0][1]
+    assert "shorter than minLength 1" in dropped[1][1]
 
 
 def test_cost_allocation_rule_schema_file_is_loadable():

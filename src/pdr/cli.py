@@ -182,7 +182,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     cfg = load_config(args.config)
-    return args.func(args, cfg)
+    try:
+        return args.func(args, cfg)
+    except (ValueError, FileNotFoundError) as e:
+        # Bad input or a missing fixture/sidecar reads as a one-line
+        # message on stderr, not a traceback. These paths already build
+        # actionable messages naming the file and what was expected.
+        print(f"pdr: {e}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
