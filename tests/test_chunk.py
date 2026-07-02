@@ -163,6 +163,33 @@ def test_line_ranges_bracket_chunk_content_under_carry_overlap():
         )
 
 
+def test_malformed_jsonl_raises_valueerror_with_line_context(tmp_path):
+    # A bad JSON row must surface path:lineno, not a bare JSONDecodeError.
+    src = tmp_path / "pages.jsonl"
+    src.write_text(
+        '{"page_number": 1, "text": "ok"}\n'
+        "{not valid json\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "fixture.meta.json").write_text(
+        json.dumps(
+            {
+                "docket_id": "PUR-2024-00001",
+                "source_url": "https://example.test/doc",
+                "retrieved_at": "2024-01-01T00:00:00Z",
+                "sha256": "0" * 64,
+            }
+        ),
+        encoding="utf-8",
+    )
+    doc = load_fixture(tmp_path)
+    with pytest.raises(ValueError) as excinfo:
+        list(doc.pages())
+    msg = str(excinfo.value)
+    assert f"{src}:2" in msg
+    assert "not valid JSON" in msg
+
+
 def test_split_paragraphs_carries_source_line_spans():
     page = "alpha line\nstill alpha\n\nbeta line\n\ngamma\n"
     paras = _split_paragraphs(page)

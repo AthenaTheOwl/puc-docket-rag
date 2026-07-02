@@ -44,7 +44,14 @@ def _pages_from_jsonl(path: Path) -> Iterator[tuple[int, str]]:
             line = line.strip()
             if not line:
                 continue
-            row = json.loads(line)
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError as e:
+                # Name the file and line so a bad row is as actionable as
+                # the missing-field branch below, not a bare decode trace.
+                raise ValueError(
+                    f"{path}:{lineno}: not valid JSON: {e.msg}"
+                ) from e
             if "page_number" not in row or "text" not in row:
                 raise ValueError(
                     f"{path}:{lineno}: pages.jsonl rows must carry "
