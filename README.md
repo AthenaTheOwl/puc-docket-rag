@@ -14,9 +14,9 @@ page-and-line citation hanging off every one.
 
 The citation is not decoration; it is the gate. Every extracted rule has to point at
 a passage that retrieval actually returned. A rule whose citation isn't in the
-retrieved set is dropped, never emitted unsourced. The eval suite measures that
-faithfulness and the build fails below threshold, so an answer that can't show its
-work doesn't ship. The extraction pattern is borrowed from
+retrieved set is dropped, never emitted unsourced. CI tests that gate; the eval that
+would check whether the passage actually supports the rule is still planned (see
+Citation faithfulness below). The extraction pattern is borrowed from
 [supplier-risk-rag-agent](https://github.com/AthenaTheOwl/supplier-risk-rag-agent);
 the rest is deliberately thin — ingest, chunk, embed, search, two extraction passes.
 
@@ -158,16 +158,22 @@ puc-docket-rag/
 
 ## Citation faithfulness
 
-The eval suite holds out a hand-labeled set of (question, answer, expected-citation)
-tuples. A pipeline pass produces an answer and a citation, and the eval scores two
+The faithfulness eval is planned; its task is still open in
+[specs/0001-foundation/tasks.md](specs/0001-foundation/tasks.md) (PR 3). The plan is
+a hand-labeled set of (question, answer, expected-citation) tuples, scored on two
 things:
 
 - **Recall@5**: does the expected citation appear in the top-5 cited passages?
 - **Citation faithfulness**: does the produced answer's claim appear verbatim or as a
   paraphrase within the cited passage?
 
-The threshold for v0 acceptance is recall@5 >= 90% and faithfulness >= 95%. Drift
-below either fails CI.
+The planned bar is recall@5 >= 90% and faithfulness >= 95%. Nothing measures either
+number yet, so neither can fail CI.
+
+What CI checks today is membership. pytest runs extraction over the VA fixture and
+asserts that a rule whose cited `chunk_id` is not among the retrieved chunks gets
+dropped. That proves the citation names a passage retrieval returned. Whether the
+passage supports the rule goes unchecked until the eval lands.
 
 ## Method update
 
