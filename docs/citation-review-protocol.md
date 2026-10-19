@@ -16,5 +16,4 @@ Preserve document version, docket, page/line anchor, speaker and procedural stat
 
 ## References
 
-- https://github.com/3orionkings/ai-product-team/blob/main/workflows/process-change.md
 - https://www.ferc.gov/explainer-interconnection-final-rule
