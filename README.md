@@ -169,10 +169,10 @@ things:
 The threshold for v0 acceptance is recall@5 >= 90% and faithfulness >= 95%. Drift
 below either fails CI.
 
-## License
-
-MIT. See LICENSE.
-
 ## Method update
 
 [October method update: Citation membership and claim support are separate checks](docs/citation-review-protocol.md).
+
+## License
+
+MIT. See LICENSE.
