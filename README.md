@@ -172,3 +172,7 @@ below either fails CI.
 ## License
 
 MIT. See LICENSE.
+
+## Method update
+
+[October method update: Citation membership and claim support are separate checks](docs/citation-review-protocol.md).
