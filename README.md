@@ -57,6 +57,10 @@ Every kept rule carries a page-and-line citation back to the docket. The dropped
 named a chunk that retrieval never surfaced, so the gate removed it rather than let
 an unsourced rule through.
 
+CAR-001 is canned `FakeAdapter` text pinned to the top hit. It passes the membership
+gate, but page 1 only describes a proposed new subclass, so it is the kind of row the
+planned claim-support check would reject (see the method update below).
+
 ## Live demo
 
 An interactive Streamlit page wraps the same `pdr demo` result: the ranked TF-IDF
