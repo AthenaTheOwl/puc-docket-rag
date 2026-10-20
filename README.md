@@ -172,8 +172,9 @@ The planned bar is recall@5 >= 90% and faithfulness >= 95%. Nothing measures eit
 number yet, so neither can fail CI.
 
 What CI checks today is membership. pytest runs extraction over the VA fixture and
-asserts that a rule whose cited `chunk_id` is not among the retrieved chunks gets
-dropped. That proves the citation names a passage retrieval returned. Whether the
+asserts that a rule whose cited `chunk_id` is not among the retrieved top-k chunks
+gets dropped, both for a fabricated id and for a real chunk that retrieval ranked
+outside the top k. That proves the citation names a passage retrieval returned. Whether the
 passage supports the rule goes unchecked until the eval lands.
 
 ## Method update
