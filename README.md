@@ -158,9 +158,10 @@ puc-docket-rag/
 
 ## Citation faithfulness
 
-The faithfulness eval is planned; its task is still open in
-[specs/0001-foundation/tasks.md](specs/0001-foundation/tasks.md) (PR 3). The plan is
-a hand-labeled set of (question, answer, expected-citation) tuples, scored on two
+The faithfulness eval is planned for spec 0003 (see
+[DEC-001](decisions/DEC-001-citation-faithfulness-contract.md) and
+[specs/0002-design/requirements.md](specs/0002-design/requirements.md), Deferred).
+The plan is a hand-labeled set of (question, answer, expected-citation) tuples, scored on two
 things:
 
 - **Recall@5**: does the expected citation appear in the top-5 cited passages?
