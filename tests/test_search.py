@@ -205,6 +205,40 @@ def test_extract_keeps_good_row_drops_bogus_citation(tmp_path):
     assert "not in retrieved set" in reason
 
 
+def test_extract_drops_real_chunk_outside_top_k(tmp_path):
+    # The gate must check the retrieved top-k, not the whole index: a row
+    # citing a real chunk_id that retrieval did not return is dropped.
+    stem = _build(tmp_path)
+    query = "cost allocation methodology"
+    all_hits = search(stem, query, k=10)
+    assert len(all_hits) > 1
+    outside = all_hits[1]
+
+    class _OutsideAdapter:
+        name = "outside"
+
+        def extract(self, schema, query, hits):
+            return [
+                {
+                    "rule_id": "CAR-901",
+                    "rule_text": "Cites a real chunk that was not retrieved.",
+                    "source_citation": {
+                        "docket_id": outside.docket_id,
+                        "page_number": outside.page_number,
+                        "line_range": f"{outside.line_start}-{outside.line_end}",
+                        "chunk_id": outside.chunk_id,
+                    },
+                }
+            ]
+
+    kept, dropped = extract(
+        stem, "cost_allocation_rule", adapter=_OutsideAdapter(), query=query, k=1
+    )
+    assert kept == []
+    assert len(dropped) == 1
+    assert "not in retrieved set" in dropped[0][1]
+
+
 def test_validate_citations_drops_schema_violations(tmp_path):
     stem = _build(tmp_path)
     hits = search(stem, "cost allocation methodology", k=3)
