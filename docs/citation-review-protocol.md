@@ -13,7 +13,3 @@ Proposed synthetic acceptance cases:
 | The rule applies only to new large-load contracts | The rule applies to every customer | Reject the scope expansion |
 
 Preserve document version, docket, page/line anchor, speaker and procedural status. Evaluate retrieval recall and extraction support separately. A future docket amendment should queue the dependent rule and downstream ratepayer assumption for review without deleting the historical extraction. These checks are proposed; the current membership gate remains the implemented boundary.
-
-## References
-
-- https://www.ferc.gov/explainer-interconnection-final-rule
